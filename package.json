@@ -1,0 +1,10 @@
+{
+  "name": "mnemix",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev:landing": "npm run dev --workspace=packages/landing",
+    "build:cli": "npm run build --workspace=packages/cli",
+    "build:landing": "npm run build --workspace=packages/landing"
+  }
+}
