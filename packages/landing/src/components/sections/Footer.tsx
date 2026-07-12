@@ -13,7 +13,7 @@ export default function Footer() {
 
         <div className="flex items-center gap-4">
           <a
-            href="https://github.com"
+            href="https://github.com/dr4ken-soul/Mnemix"
             target="_blank"
             rel="noopener noreferrer"
             className="footer-link font-sans text-sm font-light text-[var(--text-secondary)]"
