@@ -28,6 +28,19 @@ export async function runResolve(options: {
     return
   }
 
+  // INTELLIGENCE UPGRADE: Ignore exploratory commands.
+  // If the user fails a command, then types `ls` or `cd` to look around,
+  // we shouldn't record `ls` as the fix. We keep the pending failure active
+  // until they run a real command.
+  const ignorePrefixes = ['cd ', 'ls', 'cat ', 'echo ', 'clear', 'pwd', 'history']
+  const isExploratory = ignorePrefixes.some(prefix => 
+    options.command.trim().startsWith(prefix) || options.command.trim() === prefix.trim()
+  )
+  
+  if (isExploratory) {
+    return // Do not clear pending, keep waiting for the real fix
+  }
+
   const client = await createSilentClient()
   if (!client) {
     // Always write to local memory so the offline fallback can search it
