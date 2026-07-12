@@ -15,10 +15,9 @@ const faqs = [
       'No. Mnemix writes everything to Supermemory Local which runs entirely on your machine. No data is sent to any remote server.',
   },
   {
-    question:
-      'Do I need Supermemory Local running all the time or just when I use Mnemix?',
+    question: 'Do I need Supermemory Local running to use Mnemix?',
     answer:
-      'Supermemory Local needs to be running for Mnemix to store and search fixes. If it is not running, Mnemix degrades silently and queues captures locally until the server is back up.',
+      'No! Mnemix has a built-in offline fallback. It works right out of the box using a local JSON file. However, running Supermemory Local is recommended because it unlocks powerful AI semantic search for your fixes.',
   },
   {
     question: 'What happens when I run a command Mnemix has never seen before?',

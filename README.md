@@ -6,11 +6,13 @@ Mnemix is a shell memory daemon built on Supermemory Local. It hooks into zsh an
 
 No cloud. No chat. No account. Everything stays on your machine.
 
-## How it uses Supermemory Local
+## Architecture & Supermemory Local
 
-Supermemory Local is the full intelligence layer. Mnemix stores each resolved fix as a document under the container tag `mnemix-fixes` and searches those documents with semantic search when a command exits non-zero. Without Supermemory Local there is no product, only logging.
+Mnemix features a robust offline-first architecture:
+1. **Offline Fallback**: Works instantly out of the box using a local JSON file (`~/.mnemix/memory.json`). You can use Mnemix with zero setup or dependencies.
+2. **Supermemory Local Integration**: If you have Supermemory Local running, Mnemix automatically connects to it. It stores each resolved fix as a document and uses powerful AI semantic search to find fixes even when the error output isn't an exact match.
 
-Default endpoint: `http://localhost:6767`
+Default Supermemory endpoint: `http://localhost:6767`
 
 ## Install
 
