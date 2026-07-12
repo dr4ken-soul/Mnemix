@@ -8,39 +8,53 @@ import { writePending } from '../lib/pending.js'
 import { enqueueCapture } from '../lib/queue.js'
 import { flushQueue } from './flush.js'
 import { searchForFix } from './search.js'
+import { searchLocalMemory } from '../lib/localMemory.js'
 
 /**
  * Handles a non-zero exit from shell hooks.
- * Searches for a past fix, prints a suggestion when relevant,
- * and stores the failure as pending for a later resolve.
- * When Supermemory Local is offline, queues the capture locally.
+ * Searches Supermemory Local for a past fix when available, or falls back
+ * to the local ~/.mnemix/memory.json file when the server is offline.
+ * Prints a suggestion when a relevant match is found.
+ * Stores the failure as pending for a later resolve.
  * @param payload - capture data from the shell hook
  */
 export async function handleCapture(payload: CapturePayload): Promise<void> {
-  const client = await createSilentClient()
-  if (!client) {
-    enqueueCapture(payload)
-    writePending({
-      command: payload.command,
-      errorSnippet: truncateErrorSnippet(
-        payload.stderrSnippet ?? '',
-        getMaxErrorChars(),
-      ),
-      directory: payload.directory,
-      gitBranch: payload.gitBranch,
-      failedAt: Date.now(),
-    })
-    return
-  }
-
-  // Best-effort flush of any offline work first
-  await flushQueue(client)
-
   const errorSnippet = truncateErrorSnippet(
     payload.stderrSnippet ?? '',
     getMaxErrorChars(),
   )
   const errorLine = errorSnippet.split('\n')[0] ?? ''
+
+  const client = await createSilentClient()
+
+  if (!client) {
+    // Supermemory offline — queue for later and try local memory
+    enqueueCapture(payload)
+    writePending({
+      command: payload.command,
+      errorSnippet,
+      directory: payload.directory,
+      gitBranch: payload.gitBranch,
+      failedAt: Date.now(),
+    })
+
+    // Search local memory file as offline fallback
+    const localMatch = searchLocalMemory(payload.command, errorLine)
+    if (localMatch) {
+      process.stdout.write(
+        `${formatFixSuggestion(
+          localMatch.fixCommand,
+          localMatch.directory,
+          localMatch.resolvedAt,
+          localMatch.gitBranch,
+        )}\n`,
+      )
+    }
+    return
+  }
+
+  // Supermemory is online — flush any offline work first then search
+  await flushQueue(client)
 
   const match = await searchForFix(client, payload.command, errorLine)
   if (match) {

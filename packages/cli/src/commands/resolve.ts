@@ -3,10 +3,12 @@ import { clearPending, readPending } from '../lib/pending.js'
 import { enqueueResolve } from '../lib/queue.js'
 import { flushQueue } from '../hooks/flush.js'
 import { storeFix } from '../hooks/store.js'
+import { storeLocalFix } from '../lib/localMemory.js'
 
 /**
  * Pairs a successful command with the previous pending failure and stores the fix.
- * Queues the resolve when Supermemory is offline.
+ * When Supermemory is online, stores via the API.
+ * When offline, writes directly to ~/.mnemix/memory.json as a local fallback.
  * @param options - resolve options from shell hooks
  */
 export async function runResolve(options: {
@@ -28,6 +30,15 @@ export async function runResolve(options: {
 
   const client = await createSilentClient()
   if (!client) {
+    // Always write to local memory so the offline fallback can search it
+    storeLocalFix({
+      command: pending.command,
+      errorSnippet: pending.errorSnippet,
+      fixCommand: options.command,
+      directory: pending.directory,
+      gitBranch: pending.gitBranch,
+      resolvedAt: Date.now(),
+    })
     enqueueResolve(pending, options.command)
     clearPending()
     return
@@ -43,7 +54,24 @@ export async function runResolve(options: {
       pending.directory,
       pending.gitBranch,
     )
+    // Also write to local memory as a redundant offline cache
+    storeLocalFix({
+      command: pending.command,
+      errorSnippet: pending.errorSnippet,
+      fixCommand: options.command,
+      directory: pending.directory,
+      gitBranch: pending.gitBranch,
+      resolvedAt: Date.now(),
+    })
   } catch {
+    storeLocalFix({
+      command: pending.command,
+      errorSnippet: pending.errorSnippet,
+      fixCommand: options.command,
+      directory: pending.directory,
+      gitBranch: pending.gitBranch,
+      resolvedAt: Date.now(),
+    })
     enqueueResolve(pending, options.command)
   } finally {
     clearPending()
